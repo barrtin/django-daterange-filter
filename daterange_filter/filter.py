@@ -14,7 +14,7 @@ from django.utils.translation import ugettext as _
 
 class DateRangeForm(forms.Form):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, request=None, *args, **kwargs):
         field_name = kwargs.pop('field_name')
         super(DateRangeForm, self).__init__(*args, **kwargs)
 
@@ -27,6 +27,11 @@ class DateRangeForm(forms.Form):
             label='', widget=AdminDateWidget(
                 attrs={'placeholder': _('To date')}), localize=True,
             required=False)
+        for field in request.GET.keys():
+            if field not in self.fields:
+                self.fields[field] = forms.Field()
+                self.fields[field].widget = forms.HiddenInput()
+                self.fields[field].required = False
 
 
 class DateRangeFilter(admin.filters.FieldListFilter):
@@ -46,8 +51,9 @@ class DateRangeFilter(admin.filters.FieldListFilter):
         return [self.lookup_kwarg_since, self.lookup_kwarg_upto]
 
     def get_form(self, request):
-        return DateRangeForm(data=self.used_parameters,
-                             field_name=self.field_path)
+        return DateRangeForm(data=request.GET,
+                            field_name=self.field_path,
+                            request=request)
 
     def queryset(self, request, queryset):
         if self.form.is_valid():
