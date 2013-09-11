@@ -27,6 +27,7 @@ class DateRangeForm(forms.Form):
             label='', widget=AdminDateWidget(
                 attrs={'placeholder': _('To date')}), localize=True,
             required=False)
+
         for field in request.GET.keys():
             if field not in self.fields:
                 self.fields[field] = forms.Field()
@@ -58,8 +59,8 @@ class DateRangeFilter(admin.filters.FieldListFilter):
     def queryset(self, request, queryset):
         if self.form.is_valid():
             # get no null params
-            filter_params = dict(filter(lambda x: bool(x[1]),
-                                        self.form.cleaned_data.items()))
+            filter_fields = self.lookup_kwarg_upto, self.lookup_kwarg_since
+            filter_params = dict([key, val] for key, val in self.form.cleaned_data.items() if val and key in filter_fields)
             return queryset.filter(**filter_params)
         else:
             return queryset
